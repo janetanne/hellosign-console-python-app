@@ -30,7 +30,7 @@ def run_app():
         choice = return_choice()
         process_choice(choice)
         
-        if process_choice == "0" or process_choice == 0:
+        if process_choice == 0:
                 running = False
 
     # NEED TO FIX THIS LOOP; DOESN'T ACTUALLY LET ME EXIT
@@ -114,7 +114,8 @@ def process_choice(num):
             pprint("Accounts that can access this template: {}".format(templ.accounts))
 
     elif num == 0:
-            running = False
+        running = False
+        return running
 
     else:
         new_choice = input("Seems like you've chosen an invalid option. Try again, or type 0 to exit >> ")
