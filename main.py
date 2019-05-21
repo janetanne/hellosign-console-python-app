@@ -1,8 +1,11 @@
 from pprint import pprint
 from hellosign_sdk import HSClient
 import os
+import requests
+import json
 
 API_KEY = os.environ['API_KEY']
+CLIENT_ID = os.environ['CLIENT_ID']
 
 client = HSClient(api_key=API_KEY)
 
@@ -15,6 +18,7 @@ MENU_CHOICES = { 1 : "send non-embedded signature request",
                  6 : "send a reminder for signature request",
                  7 : "get account info",
                  8 : "get template",
+                 9 : "send non-embedded signature request with template NOT USING SDK",
                  0 : "exit app",
                 }
 
@@ -51,9 +55,9 @@ def process_choice(num):
     signers = [
                     { "name": "Janet",
                       "email_address" : "janet.anne@dropbox.com"},
-                    { "name" : "Janet 2",
-                      "email_address": "janetpanen@gmail.com" }
-                  ]
+                    # { "name" : "Janet 2",
+                    #  "email_address": "janetpanen@gmail.com" }
+                ]
     files = ["blank_test.pdf"]
     
     # send non-embedded signature request
@@ -112,6 +116,46 @@ def process_choice(num):
             templ_id = input("Please provide the template id >> ")
             templ = client.get_template(templ_id)
             pprint("Accounts that can access this template: {}".format(templ.accounts))
+    
+    # sends a non-embbeded sig request with template NOT USING THE SDK
+    elif num == 9:
+
+        buildTheRequest = 'https://' + API_KEY + \
+                          ':@api.hellosign.com/v3/signature_request/send_with_template'
+   
+        data = {
+            'client_id': CLIENT_ID,
+            'template_id': '0e9e8276e97b9cc93694058cf6eb6e8b1975cd0a',
+            'subject': 'test',
+            'message': 'test',
+            'signers[Client][name]': 'George',
+            'signers[Client][email_address]': 'alex.mcferron@hellosign.com',
+            'test_mode': '1'
+        }
+
+        print(buildTheRequest)
+        r = requests.post(buildTheRequest, data)
+        print(r.text)
+        # Collapse
+
+    # sends non-embedded sig request with file_url
+    elif num == 10:
+        buildTheRequest = 'https://' + API_KEY + \
+                          ':@api.hellosign.com/v3/signature_request/send'
+   
+        data = {
+            'client_id': CLIENT_ID,
+            'template_id': '0e9e8276e97b9cc93694058cf6eb6e8b1975cd0a',
+            'subject': 'test',
+            'message': 'test',
+            'signers[Client][name]': 'George',
+            'signers[Client][email_address]': 'alex.mcferron@hellosign.com',
+            'test_mode': '1'
+        }
+
+        print(buildTheRequest)
+        r = requests.post(buildTheRequest, data)
+        print(r.text)
 
     elif num == 0:
         running = False
