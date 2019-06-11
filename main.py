@@ -19,12 +19,14 @@ MENU_CHOICES = { 1 : "send non-embedded signature request",
                  7 : "get account info",
                  8 : "get template",
                  9 : "send non-embedded signature request with template NOT USING SDK",
+                 10: "sends non-embedded sig request with file_url NOT USING SDK",
+                 11: "list signature requests",
                  0 : "exit app",
                 }
 
 def run_app():
     
-    pprint("Welcome to Janet's HelloSign Console App!")
+    pprint("\n\nWelcome to Janet's HelloSign Console App!\n\n")
     
     running = True
 
@@ -149,13 +151,17 @@ def process_choice(num):
             'subject': 'test',
             'message': 'test',
             'signers[Client][name]': 'George',
-            'signers[Client][email_address]': 'alex.mcferron@hellosign.com',
+            'signers[Client][email_address]': 'janet.anne@hellosign.com',
             'test_mode': '1'
         }
 
         print(buildTheRequest)
         r = requests.post(buildTheRequest, data)
         print(r.text)
+    
+    elif num == 11:
+        signature_request_list = client.get_signature_request_list(page=1)
+        pprint(signature_request_list)
 
     elif num == 0:
         running = False
