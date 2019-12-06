@@ -9,7 +9,6 @@ CLIENT_ID = os.environ['CLIENT_ID']
 
 client = HSClient(api_key=API_KEY)
 
-
 MENU_CHOICES = { 1 : "send non-embedded signature request",
                  2 : "get signature request",
                  3 : "send non-embedded signature request with template",
@@ -19,46 +18,61 @@ MENU_CHOICES = { 1 : "send non-embedded signature request",
                  7 : "get account info",
                  8 : "get template",
                  9 : "send non-embedded signature request with template NOT USING SDK",
-                 10: "sends non-embedded sig request with file_url NOT USING SDK",
+                 10: "send non-embedded sig request with file_url NOT USING SDK",
                  11: "list signature requests",
+                 12: "send embedded signature request",
+                 13: "send embedded signature request with template",
+                 14: "get files of signature request",
                  0 : "exit app",
                 }
 
 def run_app():
+    '''Runs the console app.'''
     
-    pprint("\n\nWelcome to Janet's HelloSign Console App!\n\n")
-    
-    running = True
+    print("\n\nWelcome to Janet's HelloSign Console App!\n\n")
 
-    while running:
+    while True:
         
         print_menu()
-        choice = return_choice()
-        process_choice(choice)
+        user_choice = return_choice()
         
-        if process_choice == 0:
-                running = False
+        if user_choice == 0:
+            break
 
-    # NEED TO FIX THIS LOOP; DOESN'T ACTUALLY LET ME EXIT
+        process_choice(user_choice)
 
 def print_menu():
+    '''Takes in no argument, prints the menu list'''
         
     for k, v in MENU_CHOICES.items():
         pprint("Type {} to {}".format(k, v))
 
 def return_choice():
+    '''Takes in no argument, returns integer. If the input given is not an integer, loops until input is an integer.'''
 
-    choice = int(input("What would you like to do today? >>"))
+    while True:
 
-    return choice
+        try:
+            choice = int(input("What would you like to do today? >>"))
+
+        except ValueError:
+            pprint("Oops! Looks like you entered something that wasn't a number. Try again?")
+            continue
+
+        else:
+            return choice
+            break
 
 def process_choice(num):
     
     signers = [
-                    { "name": "Janet",
-                      "email_address" : "janet.anne@dropbox.com"},
-                    # { "name" : "Janet 2",
-                    #  "email_address": "janetpanen@gmail.com" }
+                    { "name": "JANET PERSONAL",
+                      "email_address" : "janetpanen@gmail.com",
+                    #   "role_name" : "Client"
+                    },
+                    # { "name" : "JANET DBX",
+                    #  "email_address": "janet.anne@dropbox.com"
+                    # },
                 ]
     files = ["blank_test.pdf"]
     
@@ -71,6 +85,7 @@ def process_choice(num):
                                                 subject="console app testing",
                                                 signers=signers
                                                 )
+        pprint("This has been sent to your signers. Check your email!")
 
     # get signature request
     elif num == 2:
@@ -88,11 +103,23 @@ def process_choice(num):
                                         title="TEMPLATE TEST VIA CONSOLE APP",
                                         subject="template test via console app",
                                         signers=signers,
+                                        client_id=CLIENT_ID
         )
     
-    # TO DO: send non-embedded sig request with template & custom fields
+    # send non-embedded sig request with template & custom fields
     elif num == 4:
-            pass
+        templ_id = input("Please provide the template id for sending out a signature request >> ")
+        custom_fields = [
+                            {"test_1" : "value for test_1" },
+                            {"test_2" : "value for test_2" }
+        ]
+
+        signature_request = client.send_signature_request_with_template(
+                                        template_id=templ_id,
+                                        signers=signers,
+                                        client_id=CLIENT_ID,
+                                        custom_fields=custom_fields,
+        )
 
     # cancel signature request
     elif num == 5:
@@ -119,20 +146,22 @@ def process_choice(num):
             templ = client.get_template(templ_id)
             pprint("Accounts that can access this template: {}".format(templ.accounts))
     
-    # sends a non-embbeded sig request with template NOT USING THE SDK
+    # sends a non-embbeded sig request NOT USING THE SDK
     elif num == 9:
 
         buildTheRequest = 'https://' + API_KEY + \
-                          ':@api.hellosign.com/v3/signature_request/send_with_template'
+                          ':@api.hellosign.com/v3/signature_request/send'
    
         data = {
             'client_id': CLIENT_ID,
-            'template_id': '0e9e8276e97b9cc93694058cf6eb6e8b1975cd0a',
-            'subject': 'test',
-            'message': 'test',
-            'signers[Client][name]': 'George',
-            'signers[Client][email_address]': 'alex.mcferron@hellosign.com',
-            'test_mode': '1'
+            # 'template_id': '0e9e8276e97b9cc93694058cf6eb6e8b1975cd0a',
+            'subject': 'test with console - no SDK',
+            # 'message': 'test',
+            'signers[0][name]': 'George',
+            'signers[0][email_address]': 'janetanne@dropbox.com',
+            'test_mode': '1',
+            'file[0]': files,
+            'field_options': {"date_format":"DD - MM - YYYY"},
         }
 
         print(buildTheRequest)
@@ -147,7 +176,8 @@ def process_choice(num):
    
         data = {
             'client_id': CLIENT_ID,
-            'template_id': '0e9e8276e97b9cc93694058cf6eb6e8b1975cd0a',
+            # 'template_id': '0e9e8276e97b9cc93694058cf6eb6e8b1975cd0a',
+            # 'file[0]' : 'test', # NEED TO GET A PUBLIC URL THROUGH AWS
             'subject': 'test',
             'message': 'test',
             'signers[Client][name]': 'George',
@@ -159,17 +189,63 @@ def process_choice(num):
         r = requests.post(buildTheRequest, data)
         print(r.text)
     
+    # lists signature requests
     elif num == 11:
         signature_request_list = client.get_signature_request_list(page=1)
-        pprint(signature_request_list)
 
-    elif num == 0:
-        running = False
-        return running
+        for signature_request in signature_request_list:
+            pprint("signature_request_id: {}, signature_request_status: {}".format(
+                signature_request.signature_request_id, signature_request.is_complete)
+        
+    # "send embedded signature request",
+    elif num == 12: 
+        signature_request = client.send_signature_request_embedded(
+            test_mode = 1,
+            client_id = CLIENT_ID,
+            files = files,
+            subject = "EMBEDDED SIGNATURE REQUEST VIA CONSOLE APP",
+            message = "test test test test",
+            signing_redirect_url = None,
+            signers = signers,
+        )
+        for signature in signature_request.signatures:
+            embedded_obj = client.get_embedded_object(signature.signature_id)
+            sign_url = embedded_obj.sign_url
+            pprint(sign_url)
+
+
+    # send embedded signature request with template
+    elif num == 13:
+        templ_id = input("Please provide the template id for sending out a signature request >> ")
+        signature_request = client.send_signature_request_embedded_with_template(
+            test_mode = 1,
+            client_id = CLIENT_ID,
+            template_id = templ_id,
+            subject = "EMBEDDED SIGNATURE REQUEST VIA CONSOLE APP",
+            message = "test test test test",
+            signing_redirect_url = None,
+            signers = [ 
+                        { "role_name" : "Client",
+                          "email_address" : "janetpanen@gmail.com",
+                          "name" : "JANET PERSONAL"
+                        }
+                       ],
+        )
+        for signature in signature_request.signatures:
+            embedded_obj = client.get_embedded_object(signature.signature_id)
+            sign_url = embedded_obj.sign_url
+            pprint(sign_url)
+
+    elif num == 14:
+        sig_req_id = input("Please provide the signature request files you'd like to download >> ")
+        url = self.SIGNATURE_REQUEST_DOWNLOAD_PDF_URL + sig_req_id
+        return request.get(self)
+
 
     else:
-        new_choice = input("Seems like you've chosen an invalid option. Try again, or type 0 to exit >> ")
-        return new_choice
+        pprint("This was not a valid choice, please choose an option in the list.")
+        return_choice()
+
 
 if __name__ == "__main__":
       run_app()  
